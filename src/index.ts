@@ -1,13 +1,12 @@
 import express from "express" ;
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import connectDB from "./db";
-
-dotenv.config();
+import connectDB, {  UserModel, ContentModel } from "./db";
 import jwt from "jsonwebtoken"
-import { UserModel} from "./db";
+import { userMiddleware } from "./middleware";
 dotenv.config();
 const app=express();
+app.use(express.json());
 app.post("/api/v1/signup", async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
@@ -47,19 +46,31 @@ app.post("/api/v1/signin",async (req,res)=>{
     });
   }
 })
-app.post("/api/v1/content",(req,res)=>{
+app.post("/api/v1/content",userMiddleware,async (req,res)=>{
+
+  const {title,link}=req.body;
+    await ContentModel.create({
+      title,
+      link,
+      tags: [],
+      userID: (req as any).user.id
+    });
+    res.json({
+      message:"Content created successfully"
+    })
+})
+  
+  
+app.get("/api/v1/content",userMiddleware,(req,res)=>{
 
 })
-app.get("/api/v1/content",(req,res)=>{
+app.delete("/api/v1/content",userMiddleware,(req,res)=>{
 
 })
-app.delete("/api/v1/content",(req,res)=>{
+app.post("/api/v1/brain/share",userMiddleware,(req,res)=>{
 
 })
-app.post("/api/v1/brain/share",(req,res)=>{
-
-})
-app.get("/api/v1/brain/shareLink",(req,res)=>{
+app.get("/api/v1/brain/shareLink",userMiddleware,(req,res)=>{
 
 })
 connectDB();
