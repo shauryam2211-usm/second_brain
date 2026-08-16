@@ -30,7 +30,22 @@ app.post("/api/v1/signup", async (req, res) => {
     }
 });
 app.post("/api/v1/signin",async (req,res)=>{
-
+  const username=req.body.username;
+  const password=req.body.password;
+  const user=await UserModel.findOne({username,
+    password
+  });
+  if(user){
+    const token=jwt.sign({id:user._id},process.env.JWT_SECRET!,{expiresIn:"1h"});
+    res.json({
+      message:"User signed in successfully",  
+      token
+    });
+  } else {
+    res.status(401).json({
+      error:"Invalid username or password"
+    });
+  }
 })
 app.post("/api/v1/content",(req,res)=>{
 
