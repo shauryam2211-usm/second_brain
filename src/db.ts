@@ -26,4 +26,21 @@ const ContentSchema = new Schema({
 
 )
 export const ContentModel = model("Content", ContentSchema);
+const ShareSchema = new Schema({
+    hash: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    userId: {
+        type: mongoose.Types.ObjectId,
+        ref: "User",
+        required: true,
+        unique: true
+    }
+});
+
+const ShareModel = model("Share", ShareSchema);
+
+export { ShareModel };
 export default connectDB;

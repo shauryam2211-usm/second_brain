@@ -1,9 +1,10 @@
 import express from "express" ;
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import connectDB, {  UserModel, ContentModel } from "./db";
+import connectDB, {  UserModel, ContentModel, ShareModel } from "./db";
 import jwt from "jsonwebtoken"
 import { userMiddleware } from "./middleware";
+import crypto from "crypto";
 dotenv.config();
 const app=express();
 app.use(express.json());
@@ -75,24 +76,89 @@ app.get("/api/v1/content",userMiddleware,(req,res)=>{
 
 })
 app.delete("/api/v1/content",userMiddleware,(req,res)=>{
-  const contentID=req.body.contentID;
-  const userID=(req as any).user.id;
-  ContentModel.findOneAndDelete({_id:contentID,userID}).then((content)=>{
-    if(content){
-      res.json({
-        message:"Content deleted successfully"
-      })
-    } else {
-      res.status(404).json({
-        error:"Content not found"
-      })
-    }
+ app.delete("/api/v1/content", userMiddleware, (req, res) => {
+    const contentID = req.body.contentID;
+    const userID = (req as any).user.id;
+
+    ContentModel.findOneAndDelete({
+        _id: contentID,
+        userID: userID
+    }).then((content) => {
+        if (content) {
+            res.json({
+                message: "Content deleted successfully"
+            });
+        } else {
+            res.status(404).json({
+                error: "Content not found"
+            });
+        }
+    });
+});
 
 })
 app.post("/api/v1/brain/share",userMiddleware,(req,res)=>{
 
+  app.post("/api/v1/brain/share", userMiddleware, async (req, res) => {
+    const userId = (req as any).user.id;
+
+    try {
+        const existingShare = await ShareModel.findOne({ userId });
+
+        if (existingShare) {
+            return res.json({
+                message: "Brain is already shared",
+                hash: existingShare.hash
+            });
+        }
+
+        const hash = crypto.randomBytes(16).toString("hex");
+
+        const share = await ShareModel.create({
+            hash,
+            userId
+        });
+
+        res.json({
+            message: "Brain shared successfully",
+            hash: share.hash
+        });
+
+    } catch (error) {
+        console.error("Error sharing brain:", error);
+
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+});
+
 })
 app.get("/api/v1/brain/shareLink",userMiddleware,(req,res)=>{
+  app.get("/api/v1/brain/shareLink", userMiddleware, async (req, res) => {
+    const userId = (req as any).user.id;
+
+    try {
+        const share = await ShareModel.findOne({ userId });
+
+        if (!share) {
+            return res.status(404).json({
+                error: "Brain is not shared"
+            });
+        }
+
+        res.json({
+            hash: share.hash
+        });
+
+    } catch (error) {
+        console.error("Error getting share link:", error);
+
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+});
 
 })
 connectDB();
