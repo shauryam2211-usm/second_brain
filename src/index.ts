@@ -62,9 +62,31 @@ app.post("/api/v1/content",userMiddleware,async (req,res)=>{
   
   
 app.get("/api/v1/content",userMiddleware,(req,res)=>{
+  const userID=(req as any).user.id;
+  ContentModel.find({userID}).populate("userID","username").then((contents)=>{ // populate the userID field to get user details
+    res.json({
+      contents
+    })
+  }).catch((err)=>{
+    res.status(500).json({
+      error:"Internal server error"
+    })
+  })
 
 })
 app.delete("/api/v1/content",userMiddleware,(req,res)=>{
+  const contentID=req.body.contentID;
+  const userID=(req as any).user.id;
+  ContentModel.findOneAndDelete({_id:contentID,userID}).then((content)=>{
+    if(content){
+      res.json({
+        message:"Content deleted successfully"
+      })
+    } else {
+      res.status(404).json({
+        error:"Content not found"
+      })
+    }
 
 })
 app.post("/api/v1/brain/share",userMiddleware,(req,res)=>{
